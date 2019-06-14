@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/bin/python
 def Open_file():
     """Function for opening PDB file""" 
     global loaded_file 
@@ -87,6 +87,8 @@ def sortAmino_Acids():
     print("Choose an option to order by: \n number of amino acids - ascending (an) \n number of amino acids - descending (dn) \
     \n alphabetically - ascending (aa) \n alphabetically - descending (da)")
     option = input("Order by: ")
+    if option.lower() == "q" or option.upper() == "Q":
+        menu(PDB_File)
     if option.lower() == "an":
         for key, value in sorted(AA_dict.items(), key = lambda item: item[1]):     #sorts amino acids from AA_dict in ascending order according to their numbers
             print("%s ( %2s)" % (key, value),": %s" %("*"*int(value)))
@@ -217,42 +219,77 @@ def Exit():
     
 PDB_File = "None"  #Initial, currently loaded PDB file is none when no file input
 def menu(PDB_File):
-    """Function for displaying the menu for PDB file Analyzer program"""
-    print("*"*103)
-    print("*  PDB FILE ANALYZER                                                                                  *")
-    print("*"*103)
-    print("* Select an option from below: ")
-    print("*                                                                                                     *")
-    print("*   1) Open a PDB File                (O)                                                             *")
-    print("*   2) Information                    (I)                                                             *")
-    print("*   3) Show histogram of amino acids  (H)                                                             *")
-    print("*   4) Display Secondary Structure    (S)                                                             *")
-    print("*   5) Export PDB File                (X)                                                             *")
-    print("*   6) Exit                           (Q)                                                             *")
-    print("*                                                                                                     *")
+    def printMenu():
         
-    print("*                                                                    Current PDB: ", PDB_File,          )
-    print("*"*103) 
-            
-    option = input(":")
-    if option.lower() in ('o','i','h','s','q','x','1','2','3','4','5','6'): 
+        """Function for displaying the menu for PDB file Analyzer program"""
+        print("*"*103)
+        print("*  PDB FILE ANALYZER                                                                                  *")
+        print("*"*103)
+        print("* Select an option from below: ")
+        print("*                                                                                                     *")
+        print("*   1) Open a PDB File                (O)                                                             *")
+        print("*   2) Information                    (I)                                                             *")
+        print("*   3) Show histogram of amino acids  (H)                                                             *")
+        print("*   4) Display Secondary Structure    (S)                                                             *")
+        print("*   5) Export PDB File                (X)                                                             *")
+        print("*   6) Exit                           (Q)                                                             *")
+        print("*                                                                                                     *")
+
+        print("*                                                                    Current PDB: ", PDB_File,          )
+        print("*"*103) 
+
+       
+        option = str(input(":"))
+        return option
+    option =printMenu()
+    if option.lower() in ('o','q','1','6'): 
         if option.lower() == 'o' or option.upper() == 'O' or option == '1':
             PDB_File = Open_file()     #Indicates currently loaded PDB file
-            menu(PDB_File)
-        elif option.lower() == 'i' or option.upper() == 'I' or option == '2':
-            Information()
-            menu(PDB_File)                                                           #Conditions for Various Menu Options
-        elif option.lower() == 'h' or option.upper() == 'H' or option == '3':
-            Histogram()
-            menu(PDB_File)
-        elif option.lower() == 's' or option.upper() == 'S' or option == '4':
-            Sec_struct_info()
-            menu(PDB_File)
-        elif option.lower() == 'x' or option.upper() == 'X' or option == '5':
-            ExportPDB(Output_File)
-            menu(PDB_File)
-        elif option.lower() == 'q' or option.upper() == 'Q' or option == '6':
+            option = printMenu()
+            def myOptions(option):
+                if option.lower() in ('o','i','h','s','q','x','1','2','3','4','5','6'):
+                    if option.lower() == 'i' or option.upper() == 'I' or option == '2':
+                        Information()
+                        option = printMenu()                                                           #Conditions for Various Menu Options
+                        myOptions(option)
+                    if option.lower() == 'h' or option.upper() == 'H' or option == '3':
+                        Histogram()
+                        option = printMenu()
+                        myOptions(option)
+                    if option.lower() == 's' or option.upper() == 'S' or option == '4':
+                        Sec_struct_info()
+                        option = printMenu()
+                        myOptions(option)
+                    if option.lower() == 'x' or option.upper() == 'X' or option == '5':
+                        ExportPDB(Output_File)
+                        option = printMenu()
+                        myOptions(option)
+                    if option.lower() == 'q' or option.upper() == 'Q' or option == '6':
+                        Exit()
+                else:
+                    if option.lower() == 'o' or option.upper() == 'O' or option == '1':
+                        print("Do you wish to replace current file?(Y/N)")
+                        select = input(": ")
+                        if select.lower() == "Y":
+                            Exit()
+                        elif select.lower() == "N":
+                            printMenu()
+                            myOptions(option)                                     #Allows user to replace currently loaded file
+            myOptions(option)
+    
+            if option.lower() == 'o' or option.upper() == 'O' or option == '1':
+                print("Do you wish to replace current file?(Y/N)")
+                select = input(": ")
+                if select.lower() == "y":
+                    Exit()
+                elif select.lower() == "n":
+                    printMenu()
+                    myOptions(option)
+
+    else:
+        if option.lower() == 'q' or option.upper() == 'Q' or option == '6':
             Exit()
+
         else:
             print("Invalid Choice. Please choose a valid option from the menu")
             menu(PDB_File)
