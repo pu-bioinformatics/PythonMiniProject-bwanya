@@ -1,5 +1,4 @@
-#!/bin/python3
-
+#!/usr/bin/env python3
 def Open_file():
     """Function for opening PDB file""" 
     global loaded_file 
@@ -17,8 +16,8 @@ def Information():
     title_info = []
     for line in loaded_file:
         if line.startswith ('HEADER'):
-            lineList = line.split()
-            Header = lineList[4]          #Getting the file name
+            Lines = line.split()
+            Header = Lines[4]          #Getting the file name
         if line.startswith('TITLE'):
             title_info.append(line[9:-4])
     print("PDB File: %s " %Header)
@@ -62,9 +61,10 @@ def Information():
         print("Number of amino acids %d " %len(Amino_list))
         print("Number of helix: ", Helix)
         print("Number of Sheet: ", Sheet) 
-        print("Sequence:")
-        print(          '\n'.join([Amino_list[i:i+50] for i in range(0, len(Amino_list), 50)]) ,end = "\n")  #Limiting number of amino acids per line to 50
-   
+        print("Sequence:",'\n          '.join([Amino_list[i:i+50] for i in range(0, len(Amino_list), 50)]))  #Limiting number of amino acids per line to 50
+        return chains
+        return title_info
+        return Amino_list
     
 def Histogram():
     """Function for generating a Histogram for user"""
@@ -73,8 +73,8 @@ def Histogram():
     loaded_file.seek(0)
     for line in loaded_file:
         if line.startswith('SEQRES'):
-            linelist= line.split()[4:]
-            for aa in linelist:
+            lines= line.split()[4:]
+            for aa in lines:
                 Acid_list.append(aa)
     AA_dict = {}
     for amino in Acid_list:     #Getting all amino acids appended to acid list and assigning them AA dictionary
@@ -107,7 +107,9 @@ def sortAmino_Acids():
         option = input("Please enter a valid option from the menu: ")
         sortAmino_Acids()
 def Sec_struct_info():
+    """Function for extracting the secondary structure on a PDB file"""
     loaded_file.seek(0)
+    global sequences
     Amino_dict = {'ALA':'A','ARG':'R','ASN':'N','ASP':'D','CYS':'C','GLY':'G','GLN':'Q','GLU':'E','HIS':'H',\
     'ILE':'I','LEU':'L','LYS':'K','MET':'M','PHE':'F','PRO':'P','SER':'S','THR':'T','TRP':'W','TYR':'Y','VAL':'V'}
 
@@ -131,7 +133,8 @@ def Sec_struct_info():
         Secondary_structure(sequences, chain)
         loaded_file.seek(0)        
         
-def Secondary_structure(Full, chain):  
+def Secondary_structure(Full, chain):
+    """Works together with Sec_struct_info function. Takes full sequences and the chains to determine the sheets and Helices """
     loaded_file.seek(0)
     Helix_index = []
     Sheet_index = []
@@ -145,7 +148,7 @@ def Secondary_structure(Full, chain):
         liney = line.split()
         if line.startswith("HELIX") and chain == liney[7]:
             Helix_line = line.split()
-            Helic = Helix_line[5]
+            Helic = Helix_line[5]          #Getting the Helix indices & labels and appending them to the empty Helix lists above
             Helic2 = Helix_line[8]
             Helix_labels_index.append(Helic)
             Helix_label.append(Helix_line[2]) 
@@ -153,7 +156,7 @@ def Secondary_structure(Full, chain):
                 Helix_index.append(i)
         if line.startswith("SHEET") and chain == liney[8]:
             sheet_line = line.split()
-            sheet = sheet_line[6]
+            sheet = sheet_line[6]        #Extracting sheets, their indices together with labels and appending to sheet lists 
             sheet2 = sheet_line[9]
             Sheet_labels_index.append(sheet)
             Sheet_label.append(str(sheet_line[1]) + str(sheet_line[2]))
@@ -163,7 +166,7 @@ def Secondary_structure(Full, chain):
     for i in range(0,len(Helix_labels_index)):
         Helix_labels_index[i]= int(Helix_labels_index[i])  
     for i in range(0, (len(Full))):
-        Dashes.append('-')
+        Dashes.append('-')             #Assigning dashes that correspond to length of amino sequence
         Label_spaces.append(" ")
     for l,k in zip(Helix_labels_index,Helix_label):
         Label_spaces[l-1] = k
@@ -171,7 +174,7 @@ def Secondary_structure(Full, chain):
     for i in range(0,len(Helix_index)):
         Helix_index[i]= int(Helix_index[i])
     Helix_symbol = []
-    for i in range(0,len(Helix_index)):
+    for i in range(0,len(Helix_index)):   #Assigning the forward slash to the respective Helix 
         Helix_symbol.append('/')
     for index,symbol in zip(Helix_index,Helix_symbol):
         Dashes[index-1]= symbol
@@ -187,7 +190,7 @@ def Secondary_structure(Full, chain):
     for i in range(0,len(Sheet_index)):
         Sheet_index[i]= int(Sheet_index[i])
     Sheet_symbol = []
-    for i in range(0,len(Sheet_index)):
+    for i in range(0,len(Sheet_index)):      #Assign | to extracted sheets 
         Sheet_symbol.append('|')
     for index,s in zip(Sheet_index,Sheet_symbol):
         Dashes[index-1]= s
@@ -195,11 +198,22 @@ def Secondary_structure(Full, chain):
     
     
 def Sec_struct(sequences, Dashes, Label_spaces,chain):
-    print('Chain:', chain)
+    """Function for printing the secondary structure. Takes input from the Secondary_structure and Sec_struct functions"""
+    print('Chain:', chain)    
     print("(1)")
     for c in range(0,len(sequences),80):
         print(sequences[c:c+80],'\n', Dashes[c:c+80],'\n', Label_spaces[c:c+80])
-    print("(",len(sequences),")\n")       
+    print("(",len(sequences),")\n")
+    
+Output_File = "Results/PDB_Export.txt"    
+def ExportPDB(Output_File):
+    """Function that exports information on loaded PDB file to a txt file in results folder"""
+    with open(Output_File, 'a+') as Export_file:
+        Export_file.write(str(Information()))
+
+def Exit():
+    loaded_file.close()
+    menu(PDB_File)
     
 PDB_File = "None"  #Initial, currently loaded PDB file is none when no file input
 def menu(PDB_File):
@@ -227,15 +241,19 @@ def menu(PDB_File):
             menu(PDB_File)
         elif option.lower() == 'i' or option.upper() == 'I' or option == '2':
             Information()
-            menu(PDB_File)
+            menu(PDB_File)                                                           #Conditions for Various Menu Options
         elif option.lower() == 'h' or option.upper() == 'H' or option == '3':
             Histogram()
             menu(PDB_File)
         elif option.lower() == 's' or option.upper() == 'S' or option == '4':
             Sec_struct_info()
             menu(PDB_File)
-        elif option.lower() == 'q' or option.upper() == 'Q' or option == '6':
+        elif option.lower() == 'x' or option.upper() == 'X' or option == '5':
+            ExportPDB(Output_File)
             menu(PDB_File)
+        elif option.lower() == 'q' or option.upper() == 'Q' or option == '6':
+            Exit()
         else:
             print("Invalid Choice. Please choose a valid option from the menu")
             menu(PDB_File)
+menu(PDB_File)
